@@ -1,9 +1,8 @@
 require(Rcpp)
 require(inline)
 
-warning(getwd())
 dyn.load('../src/inetstuff.so')
-
+source('constants.R')
 
 
 addrlen <- function(af) ifelse(missing(af) || !AF_ok(af),stop("Could not determine Addrlen"),ifelse(af==AF_INET, IN_ADDRLEN, IN6_ADDRLEN))
@@ -38,14 +37,15 @@ inet_ntop <- function(src, af) {
       af <- src$af
       src <- src$address
     }
+# TODO(kwt): make ipnetwork object
 #    else if(is.ipnetwork(src)) {
 #      af <- src$af
 #      src <- src$ip$address
 #    }
     else {
     #let's do some coersion.
-    src <- as.rawlist(src, addrlen(ifelse(missing(af) || !AF_ok(af),
-                                          ifelse(src > 2*.Machine$integer.max + 1, 
+    src <- as.rawlist.integer(src, addrlen(ifelse(missing(af) || !AF_ok(af),
+                                          ifelse(src > 4294967295,     #255.255.255.255 
                                                  AF_INET6, 
                                                  AF_INET),
                                           af)
@@ -62,7 +62,9 @@ inet_ntop <- function(src, af) {
   }
   
   if(!AF_ok(af)) stop(sprintf("%s is not a valid address family", af))
-  
+
+# TODO(kwt): Known problem: if passed a list of raws which is less than a normally expected amount, the C interface
+#            seems to overallocate space in the RAW() macro, and doesn't zero out the space. We get weird crap output  
   return(.Call('_inet_ntop', src, af))
 }
 
@@ -76,7 +78,6 @@ as.integer.rawlist <- function(rawin) {
 
 as.rawlist.integer <- function(intin, len) {
   if(missing(len)) len <- 4L
-  print(len)
   r <- raw(length=len)
   i <- as.integer(len)
   while((intin != 0L) & (i >=0L) ) {

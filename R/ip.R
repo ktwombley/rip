@@ -9,11 +9,9 @@ ip <- function(x) {
       o$af <- xaf
     }
   } else if (is.character(x)) {
-    print("is char")
     o$af <- AF_INET
     o$address <- tryCatch(inet_pton(x, o$af), 
                           error = function(e) {
-			    print("trying ipv6")
                             o$af <- AF_INET6
                             tryCatch(inet_pton(x, o$af),
                                      error = function(e) {
