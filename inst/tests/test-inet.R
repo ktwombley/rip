@@ -49,16 +49,25 @@ test_that("inet_pton works for IPv6", {
   #Testing that inet_pton *doesn't* warn when given an AF.
   tmp <- gives_warning("Guessing address family. Results unpredictable.")(inet_pton("1::F", AF_INET6))
   expect_that(tmp$passed, is_false())
+
+  #wrong AF
+  expect_that(inet_pton("1:2:3:4:5:6:7:8", AF_INET), throws_error("Not in presentation Format"))
+})
+
+test_that("inet_ntop rejects weird inputs", {
+  expect_that(inet_ntop(), throws_error(), "Throws error on no input")
+  expect_that(inet_ntop(as.raw(c(1,2,3)), AF_INET), throws_error(), "(ipv4) Throws error on funky raw list length")
+  expect_that(inet_ntop(as.raw(c(1,2,3)), AF_INET6), throws_error(), "(ipv6) Throws error on funky raw list length")
+  expect_that(inet_ntop(as.raw(c(1,2,3))), throws_error(), "(no AF) Throws error on funky raw list length")
+  expect_that(inet_ntop(as.raw(c(1,2,3,4)), AF_INET6), throws_error(), "Throws error on AF mismatch")
+  expect_that(inet_ntop(as.raw(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)), AF_INET), throws_error(), "Throws error on AF mismatch")
+  expect_that(inet_ntop(123, 3), throws_error(".+ is not a valid address family"), "Throws error on bad AF")
+
 })
 
 test_that("inet_ntop works for IPv4", {
   #raw
   expect_that(inet_ntop(as.raw(c(127,0,0,1)), AF_INET), equals("127.0.0.1"))
-
-### See TODO in inet.R file - these are unreliable and I don't know enough to fix them yet.
-#  expect_that(inet_ntop(as.raw(c(127,0,0)), AF_INET), equals("127.0.0.0"))
-#  expect_that(inet_ntop(as.raw(c(1)), AF_INET), equals("1.0.0.0"))
-###
 
   #ip object
   ipo <- ip("10.10.10.10")
@@ -80,34 +89,33 @@ test_that("inet_ntop works for IPv4", {
   expect_that(inet_ntop(4294967295), gives_warning("Guessing address family. Results unpredictable."))
   expect_that(inet_ntop(4294967295), equals("255.255.255.255"))
 
-  #bad AF
-  expect_that(inet_ntop(123, 3), throws_error(".+ is not a valid address family"))
 
 })
 
 test_that("inet_ntop works for IPv6", {
   #raw
-  expect_that(inet_ntop(as.raw(c(127,0,0,1)), AF_INET), equals("127.0.0.1"))
-
-### See TODO in inet.R file - these are unreliable and I don't know enough to fix them yet.
-#  expect_that(inet_ntop(as.raw(c(127,0,0)), AF_INET), equals("127.0.0.0"))
-#  expect_that(inet_ntop(as.raw(c(1)), AF_INET), equals("1.0.0.0"))
-###
+  expect_that(inet_ntop(as.raw(c(127,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0)), AF_INET6), equals("7f00:1::"))
+  expect_that(inet_ntop(as.raw(c(222,173,190,239,222,173,190,239,222,173,190,239,222,173,190,239)), AF_INET6), 
+              equals("dead:beef:dead:beef:dead:beef:dead:beef"))
+  expect_that(inet_ntop(as.raw(c(127,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0))), equals("7f00:1::"))
+  expect_that(inet_ntop(as.raw(c(222,173,190,239,222,173,190,239,222,173,190,239,222,173,190,239))), 
+              equals("dead:beef:dead:beef:dead:beef:dead:beef"))
 
   #ip object
-  ipo <- ip("10.10.10.10")
-  expect_that(inet_ntop(ipo, AF_INET), equals("10.10.10.10"))
+  ipo <- ip("7f00:1::")
+  expect_that(inet_ntop(ipo, AF_INET6), equals("7f00:1::"), "with AF")
+  expect_that(inet_ntop(ipo), equals("7f00:1::"), "without AF")
+
+  expect_that(inet_ntop(ipo, AF_INET), equals("7f00:1::"), "inet_ntop correctly ignores bad AF argument")
+  expect_that(inet_ntop(ipo, AF_INET), gives_warning("af argument,.+, disagrees with src argument,.+"), "inet_ntop gives warning on AF mismatch with ip object")
+
 
   #integer
-  expect_that(inet_ntop(168430090, AF_INET), equals("10.10.10.10"))
-  expect_that(inet_ntop(168430090L, AF_INET), equals("10.10.10.10"))
-  expect_that(inet_ntop(0, AF_INET), equals("0.0.0.0"))
-  #This is the tallest integer we can handle.
-  expect_that(inet_ntop(2147483647, AF_INET), equals("127.255.255.255"))
-
-  #Double
-  expect_that(inet_ntop(2147483648, AF_INET), equals("128.0.0.0"), "Doubles work")
-  expect_that(inet_ntop(4294967295, AF_INET), equals("255.255.255.255"))
+  expect_that(inet_ntop(168430090, AF_INET6), equals("::10.10.10.10"))
+  expect_that(inet_ntop(4568430090, AF_INET6), equals("::1:104c:b60a"))
+  expect_that(inet_ntop(0, AF_INET6), equals("::"))
+  expect_that(inet_ntop(4294967295, AF_INET6), equals("::255.255.255.255"))
+  expect_that(inet_ntop(4294967296, AF_INET6), equals("::1:0:0"))
 
 
 })

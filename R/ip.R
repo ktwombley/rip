@@ -12,12 +12,15 @@ ip <- function(x) {
     o$af <- AF_INET
     o$address <- tryCatch(inet_pton(x, o$af), 
                           error = function(e) {
-                            o$af <- AF_INET6
-                            tryCatch(inet_pton(x, o$af),
-                                     error = function(e) {
-                                       stop(paste("Did not recognize an IP address", x))
-                                     })
-                            })
+			    return(NA)
+                          })
+    if(any(is.na(o$address))) {
+      o$af <- AF_INET6
+      o$address <-  tryCatch(inet_pton(x, o$af),
+                             error = function(e) {
+                               stop(paste("Did not recognize an IP address", x))
+                             })
+    }
   }
   return(o)
 }
