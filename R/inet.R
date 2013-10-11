@@ -30,6 +30,8 @@ inet_pton <- function(src, af) {
 
 
 inet_ntop <- function(src, af) {
+#  print("inet_ntop called============")
+#  print(str(src))
   if(missing(src)) {
     stop("src must be a numeric representation of an IP address")
   }
@@ -63,7 +65,7 @@ inet_ntop <- function(src, af) {
 #  }
   else {
   #let's do some coersion.
-  src <- as.rawlist.integer(src, addrlen(ifelse(missing(af) || !AF_ok(af),
+  src <- as.rawlist.numeric(src, addrlen(ifelse(missing(af) || !AF_ok(af),
                                         ifelse(src > 4294967295,     #255.255.255.255 
                                                AF_INET6, 
                                                AF_INET),
@@ -84,7 +86,7 @@ inet_ntop <- function(src, af) {
   return(.Call('_inet_ntop', src, af))
 }
 
-as.integer.rawlist <- function(rawin) {
+as.numeric.rawlist <- function(rawin) {
   x <- 0
   for(i in seq(1,length(rawin))) {
     x <- x + as.integer(rawin[i])*(256L^(length(rawin)-i))
@@ -92,17 +94,17 @@ as.integer.rawlist <- function(rawin) {
   return(x)
 }
 
-as.rawlist.integer <- function(intin, len) {
-  if(missing(len)) len <- 4L
+as.rawlist.numeric <- function(numin, len) {
+  if(missing(len)) len <- 4
   r <- raw(length=len)
   i <- as.integer(len)
-  while((intin != 0L) & (i >=0L) ) {
-    r[i] <- as.raw( intin %% 256L )
+  while((numin > 0) & (i >=0) ) {
+    r[i] <- as.raw( numin %% 256 )
     i <- i-1L
-    intin <- intin %/% 256L
+    numin <- numin %/% 256
   }
-  if (intin > 0L) {
-    stop("number too large")
+  if (numin > 0) {
+    stop(gettextf("number too large to fit into list of length %s", len))
   }
   return(r)
 }

@@ -119,3 +119,38 @@ test_that("inet_ntop works for IPv6", {
 
 
 })
+
+test_that("inet_ntop grabs the correct AF from an ip object", {
+  a <- ip("127.0.0.1")
+  expect_that(a$af, equals(AF_INET), "Testing error in ip object - AF incorrect")
+
+  threw_it <- throws_error("raw vector length does not agree with AF.")(inet_ntop(a))
+  expect_that(threw_it$passed, is_false(), "inet_ntop threw an error about raw vector length.")
+})
+
+test_that("as.numeric.rawlist works", {
+  rl <- as.raw(c(1,2,3,4))
+  ii <- as.numeric.rawlist(rl)
+  expect_that(ii, equals(16909060L), "Converts to numeric properly with 4 byte word")
+  expect_that(mode(ii), equals("numeric"))  
+
+  rl <- as.raw(c(255,255,255,255))
+  ii <- as.numeric.rawlist(rl)
+  expect_that(ii, equals(4294967295))
+  expect_that(mode(ii), equals("numeric"))  
+
+})
+
+test_that("as.rawlist.numeric works", {
+  ii <- 16909060L
+  rl <- as.rawlist.numeric(ii, 4)
+
+  expect_that(rl, equals(as.raw(c(1,2,3,4))))
+  expect_that(rl, is_a("raw"))
+
+  rl <- as.rawlist.numeric(ii)
+  expect_that(rl, equals(as.raw(c(1,2,3,4))), "Works with guessed length")
+  expect_that(rl, is_a("raw"))
+  
+
+})
