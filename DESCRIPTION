@@ -5,3 +5,8 @@ Version: 0.0.0
 Author: Keith Twombley <ktwombley@gmail.com>
 Maintainer: Keith Twombley <ktwombley@gmail.com>
 License: GPLv3
+Collate:
+    'constants.R'
+    'inet.R'
+    'ip.R'
+    'package_documentation.R'

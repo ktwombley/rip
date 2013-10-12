@@ -1,5 +1,6 @@
 source('constants.R')
 
+#' @export
 ip <- function(x) {
   #coerce an IP to an IP
   if (is.ip(x))
