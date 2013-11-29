@@ -1,5 +1,13 @@
 context("inet.R functions still sane")
 
+test_that("C functions are loaded", {
+  pton_err <- throws_error("C symbol name \"_inet_pton\" not in load table")(.Call('_inet_pton', "1.1.1.1", AF_INET))
+  expect_that(pton_err$passed, is_false(), "_inet_pton is not loaded.")
+
+  ntop_err <- throws_error("C symbol name \"_inet_ntop\" not in load table")(.Call('_inet_ntop', as.raw(c(1,1,1,1)), AF_INET))
+  expect_that(pton_err$passed, is_false(), "_inet_pton is not loaded.")
+})
+
 test_that("addrlen works", {
 
   expect_that(addrlen(), throws_error("Could not determine Addrlen"))

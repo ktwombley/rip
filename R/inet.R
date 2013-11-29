@@ -1,14 +1,34 @@
 require(Rcpp)
 require(inline)
 
-dyn.load('../src/inetstuff.so')
-source('constants.R')
+#dyn.load('../src/inetstuff.so')
+#source('constants.R')
 
-
+#' Determine the correct address length for a given address family.
+#'
+#' Given a valid address family (currently either \code{AF_INET} or 
+#' \code{AF_INET6}), returns the number of bytes required to store the ip
+#' address. Either \code{IN_ADDRLEN} (4) or \code{IN6_ADDRLEN} (16).
+#' @param af an address family, either \code{AF_INET} or \code{AF_INET6}
+#' @return numeric the number of bytes required to store an ip address in the 
+#' given address family.
+#' @export
 addrlen <- function(af) ifelse(missing(af) || !AF_ok(af),stop("Could not determine Addrlen"),ifelse(af==AF_INET, IN_ADDRLEN, IN6_ADDRLEN))
 
 
-
+#' Convert a character string IP address into its numeric form.
+#'
+#' \code{inet_pton} works like the C function from inet.h, with some R 
+#' niceties on top. If you do not supply an address family, \code{inet_pton}
+#' tries first to create an IPv4 address, and then an IPv6 address if that
+#' fails. 
+#'
+#' @param src a string representation of an IP address.
+#' @param af (optional) the address family of the IP in \code{src}.
+#' @return list of raw bytes
+#' @references \url{http://man7.org/linux/man-pages/man3/inet_pton.3.html}
+#' @seealso \link{inet_ntop}
+#' @export
 inet_pton <- function(src, af) {
   if(missing(src)) {
     stop("src must be a string representation of an IP address")
@@ -28,10 +48,21 @@ inet_pton <- function(src, af) {
 }
 
 
-
+#' Convert a numeric IP address into a character string representation.
+#'
+#' \code{inet_ntop} works like the C function from inet.h, with some R 
+#' niceties on top. If you do not supply an address family, \code{inet_pton}
+#' tries first to create an IPv4 address, and then an IPv6 address if that
+#' fails. \code{inet_ntop} understands as input numberics, a list of raw
+#' bytes, or an \code{\link{ip}} object.
+#'
+#' @param src a numeric representation of an IP address.
+#' @param af (optional) the address family of the IP in \code{src}.
+#' @return character string representation of the IP address.
+#' @references \url{http://man7.org/linux/man-pages/man3/inet_ntop.3.html}
+#' @export
+#' @seealso \link{inet_pton}
 inet_ntop <- function(src, af) {
-#  print("inet_ntop called============")
-#  print(str(src))
   if(missing(src)) {
     stop("src must be a numeric representation of an IP address")
   }
@@ -73,7 +104,6 @@ inet_ntop <- function(src, af) {
                                  )
                     )
   }
-
   
   #no af? no problem! we try both.
   if(missing(af) || is.na(af)) {
@@ -86,6 +116,19 @@ inet_ntop <- function(src, af) {
   return(.Call('_inet_ntop', src, af))
 }
 
+#' Convert a list of raws into a single numeric value
+#'
+#' This is a convenience function to convert a list of raw bytes into a
+#' numeric value. \code{as.numeric.rawlist} interprets the list in
+#' network byte order. It works relatively well for length 4 or 16 lists,
+#' but longer lists will easily overflow.
+#'
+#' @param rawin a list of raw bytess.
+#' @return numeric value obtained by treating \code{rawin} as an single integer
+#' stored in network byte order.
+#' @references \url{http://man7.org/linux/man-pages/man3/inet_ntop.3.html}
+#' @export
+#' @seealso \link{inet_pton}
 as.numeric.rawlist <- function(rawin) {
   x <- 0
   for(i in seq(1,length(rawin))) {
@@ -95,13 +138,20 @@ as.numeric.rawlist <- function(rawin) {
 }
 
 as.rawlist.numeric <- function(numin, len) {
-  if(missing(len)) len <- 4
-  r <- raw(length=len)
-  i <- as.integer(len)
+  if(missing(len)) {
+    i <- 100          #I hope that's enough
+    r <- raw()
+  } else {
+    i <- as.integer(len)
+    r <- raw(length=len)
+  }
   while((numin > 0) & (i >=0) ) {
     r[i] <- as.raw( numin %% 256 )
     i <- i-1L
     numin <- numin %/% 256
+  }
+  if (missing(len) && i > 0) {
+    r <- r[(i+1):100]
   }
   if (numin > 0) {
     stop(gettextf("number too large to fit into list of length %s", len))
