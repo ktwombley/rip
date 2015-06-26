@@ -144,7 +144,7 @@ Ops.ip <- function(e1, e2=NA) {
 #' \code{option("rip.slash"="division")}
 #' 
 #' Regardless of how you set this option, a slash embedded within a string
-#' will still be parsed as denoting CIDR notation, and the usual \code{ipnetwork}
+#' will still be parsed as denoting CIDR notation, and the usual \code{ipnet}
 #' functions will work as expected.
 #'
 #' The first time you use \code{ / } in an interactive session, you will be
@@ -168,7 +168,7 @@ Ops.ip <- function(e1, e2=NA) {
     packageStartupMessage("Hey! By default I treat `/` as CIDR notation. See ?`/.ip` for details.")
   }
   if(is.null(op) || op=="cidr") {
-    ipnetwork(e1, cidr=e2)
+    ipnet(e1, cidr=e2)
   } else if(op=="division") {
     ip(as.numeric(ip(e1))/as.numeric(ip(e2)))
   } else {

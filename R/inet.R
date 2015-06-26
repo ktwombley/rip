@@ -89,8 +89,8 @@ inet_ntop <- function(src, af) {
     af <- src$af
     src <- src$address
   }
-# TODO(kwt): make ipnetwork object
-#  else if(is.ipnetwork(src)) {
+# TODO(kwt): make ipnet object
+#  else if(is.ipnet(src)) {
 #    af <- src$af
 #    src <- src$ip$address
 #  }

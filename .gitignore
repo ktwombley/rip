@@ -3,5 +3,4 @@
 .RData
 *.so
 *.o
-NAMESPACE
 man/*
